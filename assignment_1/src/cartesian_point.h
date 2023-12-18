@@ -23,7 +23,8 @@ public:
     void setCartesian(double x,double y);
     void setX(double x);
     void setY(double y);
-    void shift(CartesianPoint to_add);
+    CartesianPoint& shift(CartesianPoint to_add);
+    CartesianPoint& rotate(double angle_radians);
 
     PolarPoint to_polar();
 

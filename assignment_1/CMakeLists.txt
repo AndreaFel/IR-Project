@@ -209,7 +209,7 @@ include_directories(
 include_directories(include${catkin_INCLUDE_DIRS})
 
 ## Build the server (goal_receiver)
-add_executable(goal_receiver src/server.cpp)
+add_executable(goal_receiver src/server.cpp src/obstacle.cpp src/polar_point.cpp src/cartesian_point.cpp src/position.cpp)
 target_include_directories(goal_receiver PRIVATE ${catkin_INCLUDE_DIRS})
 target_link_libraries(goal_receiver ${catkin_LIBRARIES})
 add_dependencies(goal_receiver ${catkin_EXPORTED_TARGETS})

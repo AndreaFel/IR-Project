@@ -29,12 +29,21 @@ void CartesianPoint::setY(double y)
 {
     y_ = y;
 }
-void CartesianPoint::shift(CartesianPoint to_add)
+CartesianPoint& CartesianPoint::shift(CartesianPoint to_add)
 {
     x_ += to_add.getX();
     y_ += to_add.getY();
+    return *this;
 }
 
+CartesianPoint& CartesianPoint::rotate(double angle_radians)
+{
+    double x = x_;
+    double y = y_;
+    x_ = x*cos(angle_radians)-y*sin(angle_radians);
+    y_ = x*sin(angle_radians)+y*cos(angle_radians);
+    return *this;
+}
 PolarPoint CartesianPoint::to_polar()
 {
     return PolarPoint(sqrt(x_*x_+y_*y_),atan2(y_,x_));
