@@ -58,12 +58,20 @@ void laserCallback(const sensor_msgs::LaserScan& m){
 
     // print obstacles
     for(auto obstacle : obstacles) {
-        ROS_INFO("Obstacle [%s]: (x=%f, y=%f, r=%f)", 
+        /*ROS_INFO("Obstacle [%s]: (x=%f, y=%f, r=%f)", 
             (obstacle.getShape() == Obstacle::Shape::Cylinder ? "Cylinder" : (obstacle.getShape() == Obstacle::Shape::Wall ? "Wall" : "Unknown")),
             obstacle.getCenter().getX(), 
             obstacle.getCenter().getY(), 
             obstacle.getRadius()
-        );
+        );*/
+        if(obstacle.getShape() == Obstacle::Shape::Cylinder) {
+            ROS_INFO("Obstacle [%s]: (x=%f, y=%f, r=%f)", 
+                "Cylinder",
+                obstacle.getCenter().getX(), 
+                obstacle.getCenter().getY(), 
+                obstacle.getRadius()
+            );
+        }
     }
 
 
