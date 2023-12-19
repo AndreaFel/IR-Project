@@ -1,5 +1,5 @@
 # 
-/assignment_1/msg/current current
+assignment_1/coordinate[] current
 
 #
-/assignment_1/msg/maximum maximum
+assignment_1/coordinate[] maximum
