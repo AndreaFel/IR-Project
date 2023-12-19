@@ -50,9 +50,11 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   coordinate.msg
-  cylinders.msg
   goal.msg
   position.msg
+  current.msg
+  maximum.msg
+  cylinders.msg
 )
 
 ## Generate services in the 'srv' folder
