@@ -1,0 +1,9 @@
+#goal definition
+/assignment_1/msg/goal goal
+---
+#result definition
+/assignment_1/msg/cylinders cylinders
+---
+#feedback
+/assignment_1/msg/position position
+/assignment_1/msg/cylinders cylinders
