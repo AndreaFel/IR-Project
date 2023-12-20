@@ -1,17 +1,17 @@
 #include "ros/ros.h"
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
-#include <assignment_1/detectionAction.h>
+#include <assignment_1/DetectionAction.h>
 
 int main(int argc, char **argv) {
 
-    actionlib::SimpleActionClient<assignment_1::detectionAction> ac("detection", true);
+    actionlib::SimpleActionClient<assignment_1::DetectionAction> ac("Detection", true);
     ROS_INFO("Waiting for action server to start.");
 
     ac.waitForServer();
     ROS_INFO("Action server started, sending goal.");
 
-    assignment_1::detectionGoal goal;
+    assignment_1::DetectionGoal goal;
     goal.goal.X = 20;
     ac.sendGoal(goal);
 
