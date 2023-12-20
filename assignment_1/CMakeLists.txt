@@ -9,9 +9,9 @@ project(assignment_1)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  actionlib
   std_msgs
   move_base_msgs
-  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -49,7 +49,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate messages in the 'msg' folder
 add_message_files(
-  FILES
+  FILES  
   coordinate.msg
   goal.msg
   position.msg
@@ -65,8 +65,6 @@ add_message_files(
 
 ## Generate actions in the 'action' folder
 add_action_files(
-  DIRECTORY
-  action
   FILES
   Detection.action
 )
@@ -217,19 +215,15 @@ include_directories(
 include_directories(include${catkin_INCLUDE_DIRS})
 
 ## Build the server (goal_receiver)
-add_executable(goal_receiver src/server.cpp)
+add_executable(goal_receiver src/server.cpp src/obstacle.cpp src/polar_point.cpp src/cartesian_point.cpp src/position.cpp)
 target_include_directories(goal_receiver PRIVATE ${catkin_INCLUDE_DIRS})
 target_link_libraries(goal_receiver ${catkin_LIBRARIES})
 add_dependencies(goal_receiver ${catkin_EXPORTED_TARGETS})
-# add_dependencies(goal_receiver assign1_generate_messages_cpp)
-add_dependencies(goal_receiver ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(goal_receiver assignment_1_generate_messages_cpp)
 
 ## Build the client (goal_sender)
 add_executable(goal_sender src/client.cpp)
 target_include_directories(goal_sender PRIVATE ${catkin_INCLUDE_DIRS})
 target_link_libraries(goal_sender ${catkin_LIBRARIES})
+add_dependencies(goal_sender assignment_1_generate_messages_cpp)
 add_dependencies(goal_sender ${catkin_EXPORTED_TARGETS})
-#add_dependencies(goal_sender assign1_generate_messages_cpp)
-add_dependencies(goal_sender ${${PROJECT_NAME}_EXPORTED_TARGETS})
-
-
