@@ -18,13 +18,9 @@
 //keep track of robot position
 Position currentPosition = {};
 
-// Map
-nav_msgs::OccupancyGrid::ConstPtr wall_map = nullptr;
-
-void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& map) {
-	wall_map = map;
-	ROS_INFO("Map received");
-}
+//maximum number of cylinders ever detected
+std::vector<Obstacle> maxCylinders, currentCylinders;
+bool send_feedback = true;
 
 void positionCallback(const move_base_msgs::MoveBaseActionFeedback::ConstPtr& m){
 	double x = m->feedback.base_position.pose.position.x;
@@ -38,24 +34,11 @@ void positionCallback(const move_base_msgs::MoveBaseActionFeedback::ConstPtr& m)
 	currentPosition.setPosition(x, y, angle);
 }
 
-// Callback function called when a goal message is received
-void goalCallback(const move_base_msgs::MoveBaseActionGoal::ConstPtr& msg) {
-	// Implement actions upon receiving the goal here
-	ROS_INFO("Received Goal: (%f, %f)", msg->goal.target_pose.pose.position.x, msg->goal.target_pose.pose.position.y);
-}
-
-bool is_cylinder(std::vector<PolarPoint> profile) {
-	PolarPoint median = PolarPoint::getMedianPoint(profile);
-	ROS_INFO("Profile size: %d, median: (d=%f,ar=%f)", profile.size(), median.getDistance(), median.getAngleRadians());
-	
-	return false;
-}
-
 void laserCallback(const sensor_msgs::LaserScan& m){
 	
 	// From laser signal extract obstacle profiles with 50cm threshold
 	std::vector<std::vector<PolarPoint>> profiles = Obstacle::getObstacleProfiles(m, 0.5);
-	ROS_INFO("Profiles size: %d\n\n", profiles.size());
+	ROS_INFO("Profiles size: %ld\n\n", profiles.size());
 	
 	// Obstacle identification
 	std::vector<Obstacle> obstacles;
@@ -63,15 +46,8 @@ void laserCallback(const sensor_msgs::LaserScan& m){
 		obstacles.push_back(Obstacle(profile, currentPosition));
 
 	// print obstacles
+	currentCylinders.clear();
 	for(auto obstacle : obstacles) {
-		/*
-		ROS_INFO("Obstacle [%s]: (x=%f, y=%f, r=%f)", 
-		    (obstacle.getShape() == Obstacle::Shape::Cylinder ? "Cylinder" : (obstacle.getShape() == Obstacle::Shape::Wall ? "Wall" : "Unknown")),
-		    obstacle.getCenter().getX(), 
-		    obstacle.getCenter().getY(), 
-		    obstacle.getRadius()
-		);
-		//*/
 		if(obstacle.getShape() == Obstacle::Shape::Cylinder) {
 		    ROS_INFO("Obstacle [%s]: (x=%f, y=%f, r=%f)", 
 		        "Cylinder",
@@ -79,10 +55,21 @@ void laserCallback(const sensor_msgs::LaserScan& m){
 		        obstacle.getCenter().getY(), 
 		        obstacle.getRadius()
 		    );
+			currentCylinders.push_back(obstacle);
 		}
 	}
+	
+	if(currentCylinders.size() > maxCylinders.size()){
+		maxCylinders.clear();
+		for(auto obstacle : obstacles) 
+			if(obstacle.getShape() == Obstacle::Shape::Cylinder) 
+				maxCylinders.push_back(obstacle);
+				
+	}
+}
 
-
+void resultCallback(const move_base_msgs::MoveBaseActionResult &msg) {
+	send_feedback = false;
 }
 
 class DetectionAction {
@@ -92,7 +79,7 @@ class DetectionAction {
         std::string action_name_;
         assignment_1::DetectionFeedback feedback_;
         assignment_1::DetectionResult result_;
-
+        
     public:
 
         DetectionAction(std::string name, ros::NodeHandle nh) : as_(nh, name, boost::bind(&DetectionAction::executeCB, this, _1), false), action_name_(name){
@@ -102,6 +89,9 @@ class DetectionAction {
         ~DetectionAction(void){}
 
         void executeCB(const assignment_1::DetectionGoalConstPtr &goal) {
+        	maxCylinders.clear();
+        	ros::Rate r(5);
+        	
 			//send position to robot
 			ros::Publisher goal_publisher = nh_.advertise<move_base_msgs::MoveBaseActionGoal>("/move_base/goal", 10);
 			ros::Duration(1.0).sleep();
@@ -121,8 +111,66 @@ class DetectionAction {
 			
 			ROS_INFO("Goal sent to robot.");
 			
-			ros::topic::waitForMessage<move_base_msgs::MoveBaseActionResult>("/move_base/result", nh_);
-			as_.setSucceeded(result_);
+			//send feedback
+			send_feedback = true;
+			bool success = true;
+			
+			while(send_feedback){
+				feedback_.position.X = currentPosition.getPoint().getX();
+		    	feedback_.position.Y = currentPosition.getPoint().getY();
+		    	feedback_.position.R = currentPosition.getOrientation();
+		    	
+		    	feedback_.cylinders.current.clear();
+		    	for(auto cyl: currentCylinders){
+			    	assignment_1::coordinate coord;
+			    	coord.X = cyl.getCenter().getX();
+			        coord.Y = cyl.getCenter().getY();
+			    	feedback_.cylinders.current.push_back(coord);
+			    }
+			    
+			    feedback_.cylinders.maximum.clear();
+		    	for(auto cyl: maxCylinders){
+			    	assignment_1::coordinate coord;
+			    	coord.X = cyl.getCenter().getX();
+			        coord.Y = cyl.getCenter().getY();
+			    	feedback_.cylinders.maximum.push_back(coord);
+			    }
+			    
+			    if (as_.isPreemptRequested() || !ros::ok()){
+					ROS_INFO("%s: Preempted", action_name_.c_str());
+					as_.setPreempted();
+					success = false;
+					break;
+				}
+				
+				as_.publishFeedback(feedback_);
+				r.sleep();
+			}
+			
+			//send result
+			if(success){
+				result_.cylinders.maximum.clear();
+				result_.cylinders.current.clear();
+
+				for(auto obstacle : maxCylinders) {
+					
+					assignment_1::coordinate newCoordinate;
+					newCoordinate.X = obstacle.getCenter().getX();
+					newCoordinate.Y = obstacle.getCenter().getY();
+					
+					result_.cylinders.maximum.push_back(newCoordinate);
+				}
+
+				for(auto obstacle : currentCylinders) {
+					assignment_1::coordinate newCoordinate;
+					newCoordinate.X = obstacle.getCenter().getX();
+					newCoordinate.Y = obstacle.getCenter().getY();
+					
+					result_.cylinders.current.push_back(newCoordinate);
+				}
+
+				as_.setSucceeded(result_);
+			}
         }
         
         
@@ -133,18 +181,15 @@ int main(int argc, char **argv) {
     // Initialize ROS node
     ros::init(argc, argv, "goal_receiver_node");
 	ros::NodeHandle nh;
-	
-	// get map
-	ros::Subscriber map_sub = nh.subscribe<nav_msgs::OccupancyGrid>("/map", 1000, mapCallback);
-
-	// Subscribe to the "/move_base/goal" topic to receive goal messages
-	ros::Subscriber goal_subscriber = nh.subscribe("/move_base/goal", 10, goalCallback);
 
 	// Subscribe to the "/scan_raw" topic to receive laser scan messages
 	ros::Subscriber laser_sub = nh.subscribe("scan_raw", 1000, laserCallback);
 	
 	// Subscribe to the "/move_base/feedback" topic to receive feedback messages
 	ros::Subscriber feedback_subscriber = nh.subscribe("/move_base/feedback", 10, positionCallback);
+	
+	// Subscribe to the "/move_base/result" topic to receive result messages
+	ros::Subscriber result_subscriber = nh.subscribe("/move_base/result", 1, resultCallback);
 
 	//get position from client
 	DetectionAction Detection("Detection", nh);

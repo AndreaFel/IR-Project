@@ -1,11 +1,36 @@
 #include "ros/ros.h"
 #include "move_base_msgs/MoveBaseActionGoal.h"
 #include "move_base_msgs/MoveBaseActionResult.h"
+#include "move_base_msgs/MoveBaseActionFeedback.h"
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <assignment_1/DetectionAction.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+
+void feedbackCallback(const assignment_1::DetectionFeedbackConstPtr& feedback) {
+
+    ROS_INFO("Position - X: %f, Y: %f, R: %f",
+             feedback->position.X, feedback->position.Y, feedback->position.R);
+
+    ROS_INFO("Number of coordinates in cylinders.current: %lu", feedback->cylinders.current.size());
+
+    for (const auto& coord : feedback->cylinders.current) {
+        ROS_INFO("Coordinates in cylinders.current - X: %f, Y: %f", coord.X, coord.Y);
+    }
+
+    ROS_INFO("Number of coordinates in cylinders.maximum: %lu", feedback->cylinders.maximum.size());
+
+    for (const auto& coord : feedback->cylinders.maximum) {
+        ROS_INFO("Coordinates in cylinders.maximum - X: %f, Y: %f", coord.X, coord.Y);
+    }
+}
+
+// Mandatory callback functions for the feedback
+void doneCb(const actionlib::SimpleClientGoalState& state, const assignment_1::DetectionResultConstPtr& feedback) {}
+void activeCb() {}
+
 
 int main(int argc, char **argv) {
     
@@ -13,6 +38,8 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "goal_sender_node");
     ros::NodeHandle nh;
 	actionlib::SimpleActionClient<assignment_1::DetectionAction> ac("Detection", true);
+
+    //ac.registerFeedbackCallback(feedbackCallback);
 	
 	ROS_INFO("Waiting for action server to start.");
 	ac.waitForServer();
@@ -58,21 +85,64 @@ int main(int argc, char **argv) {
             break;
         }
 
-        // Set y-coordinate in the goal message
+        // Set rotation in the goal message
         n = std::stod(input);
 		goal.goal.R = n;
 
-        // Publish goal
-        ac.sendGoal(goal);
+        // Ask user if they want feedback
+        ROS_INFO("Do you want real-time feedback? (Enter 's' for yes or 'n' for no):");
+        std::cin >> input;
+
+        if (input == "q") {
+            ROS_INFO("Exiting...");
+            break;
+
+        } else if (input == "s") {
+            // User wants real-time feedback
+            ac.sendGoal(goal, &doneCb, &activeCb, &feedbackCallback);
+            ROS_INFO("Real-time feedback started. Goal sent!");
+
+            // Publish goal
+            // ac.sendGoal(goal);
+            ac.sendGoal(goal, &doneCb, &activeCb, &feedbackCallback);
+
+        } else if (input == "n") {
+            // User does not want real-time feedback
+            ac.sendGoal(goal);
+
+        } else {
+            ROS_INFO("Invalid input. Please enter 's' for real-time feedback or 'n' for no feedback.");
+        }
+
         ROS_INFO("Goal sent!");
-		
-		// Wait for result
-		ac.waitForResult(ros::Duration(0.0));
-		
-		// Check result
-		actionlib::SimpleClientGoalState state = ac.getState();
-		ROS_INFO("Action finished: %s",state.toString().c_str());
+            
+        // Wait for result
+        ac.waitForResult(ros::Duration(0.0));
+        
+        if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+            ROS_INFO("The action was completed successfully");
+            const assignment_1::DetectionResultConstPtr& result = ac.getResult();
+
+            ROS_INFO("\nTotal number of cylinders seen in the path: %lu", result->cylinders.maximum.size());
+
+            // Stampa le coordinate dei cilindri visti lungo il percorso
+            for (const auto& element : result->cylinders.maximum) {
+                ROS_INFO("Position of the cylinder seen along the path - X: %f, Y: %f", element.X, element.Y);
+            }
+
+            ROS_INFO("\nTotal number of cylinders currently being viewed: %lu", result->cylinders.current.size());
+
+            // Stampa le coordinate dei cilindri attualmente in vista
+            for (const auto& element : result->cylinders.current) {
+                ROS_INFO("Position of the cylinder currently being viewed - X: %f, Y: %f", element.X, element.Y);
+            }
+            
+        } else {
+            ROS_ERROR("The action was not completed successfully");
+        }
+
 	}
 
     return 0;
 }
+

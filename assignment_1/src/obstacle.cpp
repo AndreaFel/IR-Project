@@ -1,9 +1,9 @@
 #include "obstacle.h"
 #include "ros/ros.h"
+#include <iostream>
 
 Obstacle::Obstacle(std::vector<PolarPoint> profile, 
-                   Position position, 
-                   const nav_msgs::OccupancyGrid::ConstPtr& map)
+                   Position position)
 {
     // Store data point and observer position as reference
     profile_ = profile;
@@ -23,18 +23,9 @@ Obstacle::Obstacle(std::vector<PolarPoint> profile,
     // Get the three cartesian points, the nearest point, the first and the last
     // each point is shifted to the robot position and rotated to the robot orientation
 
-    CartesianPoint nearest_cart = nearest
-                                .toCartesian()
-                                .shift(position.getPoint())
-                                .rotate(position.getOrientation());
-    CartesianPoint first = profile.front()
-                                .toCartesian()
-                                .shift(position.getPoint())
-                                .rotate(position.getOrientation());
-    CartesianPoint last = profile.back()
-                                .toCartesian()
-                                .shift(position.getPoint())
-                                .rotate(position.getOrientation());
+    CartesianPoint nearest_cart = nearest.toCartesian();
+    CartesianPoint first = profile.front().toCartesian();
+    CartesianPoint last = profile.back().toCartesian();
     
     // Compute obstacle center and radius from the three points
     radius_ = CartesianPoint::distance(first, last) / 2;
@@ -50,23 +41,34 @@ Obstacle::Obstacle(std::vector<PolarPoint> profile,
 
     // The Cylinder to detect is ~17cm radius
     bool cylinder_width_condition = radius_ > 0.1 && radius_ < 0.2;
-
-    // If the radius is too small, could be a wall, check if is part of the map
-    bool wall_condition = false;
-    if(!radius_condition && map != nullptr)
-    {
-        int x = static_cast<int>(first.getX() / map->info.resolution);
-        int y = static_cast<int>(first.getY() / map->info.resolution);
-        int index = x + y * map->info.width;
-        if (map->data[index] > 50) 
-            wall_condition = true;
-    }
+	
+	// Anti-false positive check: every point of the cylinder profile should be at the same distance from the center
+	bool constant_radius_condition = true;
+	if (circularity_condition && radius_condition && cylinder_width_condition) {
+		int i = 0;
+		for(PolarPoint p : profile){
+			CartesianPoint cp = p.toCartesian();
+			double dist = CartesianPoint::distance(center_, cp);
+    		if(abs(dist - radius_) > 0.1){
+    			std::cout<<cp.getX()<<","<<cp.getY()<<"; "<<center_.getX()<<","<<center_.getY()<<"; "<<radius_<<"; "<<dist<<"; "<<i<<"; "<<profile.size()<<std::endl;
+    			//std::cin>>dist;
+    			constant_radius_condition = false;
+    			break;
+    		}
+    		i++;
+		}
+	}
+	
+	center_ = center_.shift(position.getPoint()).rotate(position.getOrientation());
     
     // Identify the shape
-    if (circularity_condition && radius_condition && cylinder_width_condition) {
+    if (circularity_condition 
+    	&& radius_condition 
+    	&& cylinder_width_condition 
+    	&& constant_radius_condition) {
+        
         shape_ = Shape::Cylinder;
-    } else if (wall_condition) {
-        shape_ = Shape::Wall;
+    
     } else {
         shape_ = Shape::Unknown;
     }

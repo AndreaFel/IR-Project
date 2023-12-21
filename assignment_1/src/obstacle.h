@@ -18,12 +18,10 @@ class Obstacle {
 public:
     enum class Shape { 
         Unknown,
-        Cylinder, 
-        Wall 
+        Cylinder
     };
     Obstacle(std::vector<PolarPoint> profile = std::vector<PolarPoint>(), 
-                Position position = Position(),
-                const nav_msgs::OccupancyGrid::ConstPtr& map = nullptr);
+                Position position = Position());
 
     Shape getShape() const;
     std::vector<PolarPoint> getProfile() const;
