@@ -241,11 +241,3 @@ target_link_libraries(goal_sender ${catkin_LIBRARIES})
 add_dependencies(goal_sender assignment_1_generate_messages_cpp)
 add_dependencies(goal_sender ${catkin_EXPORTED_TARGETS})
 
-
-
-
-
-
-
-
-

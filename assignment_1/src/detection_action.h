@@ -5,18 +5,18 @@
 #include "move_base_msgs/MoveBaseActionResult.h"
 #include "move_base_msgs/MoveBaseActionFeedback.h"
 #include <sensor_msgs/LaserScan.h>
-#include "nav_msgs/OccupancyGrid.h"
 #include <actionlib/server/simple_action_server.h>
 #include <assignment_1/DetectionAction.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <vector>
+#include <cmath>
 
 #include "polar_point.h"
 #include "cartesian_point.h"
 #include "obstacle.h"
 #include "position.h"
 #include "detection_action.h"
-#include <vector>
-#include <iostream>
-#include <cmath>
 
 /**
  * @brief detection action server class

@@ -1,4 +1,5 @@
 #include "detection_action.h"
+#include <iostream>
 
 //global variables for callback usage only *************************************
 
@@ -49,31 +50,23 @@ void laserCallback(const sensor_msgs::LaserScan& m){
 	
 	// From laser signal extract obstacle profiles with 50cm threshold
 	std::vector<std::vector<PolarPoint>> profiles = Obstacle::getObstacleProfiles(m, 0.5);
-	ROS_INFO("Profiles size: %ld\n\n", profiles.size());
 	
 	// Obstacle identification
 	std::vector<Obstacle> obstacles;
 	for(auto profile : profiles) 
 		obstacles.push_back(Obstacle(profile, currentPosition));
 
-	// print obstacles
+	// Save cylinders seen now
 	currentCylinders.clear();
-	for(auto obstacle : obstacles) {
-		if(obstacle.getShape() == Obstacle::Shape::Cylinder) {
-		    ROS_INFO("Obstacle [%s]: (x=%f, y=%f, r=%f)", 
-		        "Cylinder",
-		        obstacle.getCenter().getX(), 
-		        obstacle.getCenter().getY(), 
-		        obstacle.getRadius()
-		    );
+	for(auto obstacle : obstacles)
+		if(obstacle.getShape() == Obstacle::Shape::Cylinder)
 			currentCylinders.push_back(obstacle);
-		}
-	}
 	
+	// Save biggest group of cylinder seen
 	if(currentCylinders.size() > maxCylinders.size()){
 		maxCylinders.clear();
-		for(auto obstacle : obstacles) 
-			if(obstacle.getShape() == Obstacle::Shape::Cylinder) 
+		for(auto obstacle : obstacles)
+			if(obstacle.getShape() == Obstacle::Shape::Cylinder)
 				maxCylinders.push_back(obstacle);
 				
 	}
@@ -143,15 +136,20 @@ void DetectionAction::executeCB(const assignment_1::DetectionGoalConstPtr &goal)
     move_base_msgs::MoveBaseActionGoal goal_msg;
     goal_msg.header.frame_id = "map";
     goal_msg.goal.target_pose.header.frame_id = "map";
-    goal_msg.goal.target_pose.pose.position.z = sin(goal->goal.R);
-    goal_msg.goal.target_pose.pose.orientation.x = 0.0;
-    goal_msg.goal.target_pose.pose.orientation.y = 0.0;
-    goal_msg.goal.target_pose.pose.orientation.z = 0.0;
-    goal_msg.goal.target_pose.pose.orientation.w = cos(goal->goal.R);
+    
+    tf2::Quaternion quat_rotation;
+	quat_rotation.setRPY(0, 0, goal->goal.R);
+	goal_msg.goal.target_pose.pose.orientation.x = quat_rotation.x();
+	goal_msg.goal.target_pose.pose.orientation.y = quat_rotation.y();
+	goal_msg.goal.target_pose.pose.orientation.z = quat_rotation.z();
+	goal_msg.goal.target_pose.pose.orientation.w = quat_rotation.w();
+    
+    goal_msg.goal.target_pose.pose.position.z = 0.0;
     goal_msg.goal.target_pose.pose.position.x = goal->goal.X;
     goal_msg.goal.target_pose.pose.position.y = goal->goal.Y;
-    goal_publisher.publish(goal_msg);
     
+    // Send goal
+    goal_publisher.publish(goal_msg);
     ROS_INFO("Goal sent to robot.");
     
     //send feedback
@@ -199,6 +197,8 @@ void DetectionAction::executeCB(const assignment_1::DetectionGoalConstPtr &goal)
     
     //send result
     if(success){
+    
+    	ROS_INFO("Result arrived from robot.");
       
         result_.cylinders.maximum.clear();
         result_.cylinders.current.clear();
@@ -221,5 +221,6 @@ void DetectionAction::executeCB(const assignment_1::DetectionGoalConstPtr &goal)
         }
 
         as_.setSucceeded(result_);
-    }
+    }else
+    	ROS_INFO("Action failed.");
 }

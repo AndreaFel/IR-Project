@@ -54,17 +54,13 @@ Obstacle::Obstacle(std::vector<PolarPoint> profile,
 	// Anti-false positive check: every point of the cylinder profile should be at the same distance from the center
 	bool constant_radius_condition = true;
 	if (circularity_condition && radius_condition && cylinder_width_condition) {
-		int i = 0;
 		for(PolarPoint p : profile){
 			CartesianPoint cp = p.toCartesian();
 			double dist = CartesianPoint::distance(center_, cp);
     		if(abs(dist - radius_) > 0.1){
-    			std::cout<<cp.getX()<<","<<cp.getY()<<"; "<<center_.getX()<<","<<center_.getY()<<"; "<<radius_<<"; "<<dist<<"; "<<i<<"; "<<profile.size()<<std::endl;
-    			//std::cin>>dist;
     			constant_radius_condition = false;
     			break;
     		}
-    		i++;
 		}
 	}
 	
