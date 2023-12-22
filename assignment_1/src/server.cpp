@@ -11,6 +11,7 @@
 #include "cartesian_point.h"
 #include "obstacle.h"
 #include "position.h"
+#include "detection_action.h"
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -20,8 +21,15 @@ Position currentPosition = {};
 
 //maximum number of cylinders ever detected
 std::vector<Obstacle> maxCylinders, currentCylinders;
-bool send_feedback = true;
 
+/**
+ * @brief Callback function for the "/move_base/feedback" topic subscriber
+ * 
+ * This function is called every time a new message is published on the "/move_base/feedback" topic.
+ * It extracts the robot position from the feedback message and stores it in the currentPosition variable.
+ * 
+ * @param m Feedback message
+ */
 void positionCallback(const move_base_msgs::MoveBaseActionFeedback::ConstPtr& m){
 	double x = m->feedback.base_position.pose.position.x;
 	double y = m->feedback.base_position.pose.position.y;
@@ -34,6 +42,18 @@ void positionCallback(const move_base_msgs::MoveBaseActionFeedback::ConstPtr& m)
 	currentPosition.setPosition(x, y, angle);
 }
 
+/**
+ * @brief Callback function for the "/scan_raw" topic subscriber
+ * 
+ * This function is called every time a new message is published on the "/scan_raw" topic.
+ * It extracts the obstacle profiles from the laser scan message and prints them.
+ * To detect the obstacle profiles, it uses the Obstacle::getObstacleProfiles() function
+ * and a threshold of 50cm. If the signal make a jump of more than 50cm, it is considered
+ * a new obstacle profile. The Obstacle class constructor is used to identify the shape
+ * of the obstacle profile.
+ * 
+ * @param m Laser scan message
+ */
 void laserCallback(const sensor_msgs::LaserScan& m){
 	
 	// From laser signal extract obstacle profiles with 50cm threshold
@@ -68,114 +88,20 @@ void laserCallback(const sensor_msgs::LaserScan& m){
 	}
 }
 
-void resultCallback(const move_base_msgs::MoveBaseActionResult &msg) {
-	send_feedback = false;
-}
-
-class DetectionAction {
-	protected:
-        ros::NodeHandle nh_;
-        actionlib::SimpleActionServer<assignment_1::DetectionAction> as_;
-        std::string action_name_;
-        assignment_1::DetectionFeedback feedback_;
-        assignment_1::DetectionResult result_;
-        
-    public:
-
-        DetectionAction(std::string name, ros::NodeHandle nh) : as_(nh, name, boost::bind(&DetectionAction::executeCB, this, _1), false), action_name_(name){
-            as_.start();
-        }
-
-        ~DetectionAction(void){}
-
-        void executeCB(const assignment_1::DetectionGoalConstPtr &goal) {
-        	maxCylinders.clear();
-        	ros::Rate r(5);
-        	
-			//send position to robot
-			ros::Publisher goal_publisher = nh_.advertise<move_base_msgs::MoveBaseActionGoal>("/move_base/goal", 10);
-			ros::Duration(1.0).sleep();
-
-			// Create a MoveBaseActionGoal message to store goal information
-			move_base_msgs::MoveBaseActionGoal goal_msg;
-			goal_msg.header.frame_id = "map";
-			goal_msg.goal.target_pose.header.frame_id = "map";
-			goal_msg.goal.target_pose.pose.position.z = sin(goal->goal.R);
-			goal_msg.goal.target_pose.pose.orientation.x = 0.0;
-			goal_msg.goal.target_pose.pose.orientation.y = 0.0;
-			goal_msg.goal.target_pose.pose.orientation.z = 0.0;
-			goal_msg.goal.target_pose.pose.orientation.w = cos(goal->goal.R);
-			goal_msg.goal.target_pose.pose.position.x = goal->goal.X;
-			goal_msg.goal.target_pose.pose.position.y = goal->goal.Y;
-			goal_publisher.publish(goal_msg);
-			
-			ROS_INFO("Goal sent to robot.");
-			
-			//send feedback
-			send_feedback = true;
-			bool success = true;
-			
-			while(send_feedback){
-				feedback_.position.X = currentPosition.getPoint().getX();
-		    	feedback_.position.Y = currentPosition.getPoint().getY();
-		    	feedback_.position.R = currentPosition.getOrientation();
-		    	
-		    	feedback_.cylinders.current.clear();
-		    	for(auto cyl: currentCylinders){
-			    	assignment_1::coordinate coord;
-			    	coord.X = cyl.getCenter().getX();
-			        coord.Y = cyl.getCenter().getY();
-			    	feedback_.cylinders.current.push_back(coord);
-			    }
-			    
-			    feedback_.cylinders.maximum.clear();
-		    	for(auto cyl: maxCylinders){
-			    	assignment_1::coordinate coord;
-			    	coord.X = cyl.getCenter().getX();
-			        coord.Y = cyl.getCenter().getY();
-			    	feedback_.cylinders.maximum.push_back(coord);
-			    }
-			    
-			    if (as_.isPreemptRequested() || !ros::ok()){
-					ROS_INFO("%s: Preempted", action_name_.c_str());
-					as_.setPreempted();
-					success = false;
-					break;
-				}
-				
-				as_.publishFeedback(feedback_);
-				r.sleep();
-			}
-			
-			//send result
-			if(success){
-				result_.cylinders.maximum.clear();
-				result_.cylinders.current.clear();
-
-				for(auto obstacle : maxCylinders) {
-					
-					assignment_1::coordinate newCoordinate;
-					newCoordinate.X = obstacle.getCenter().getX();
-					newCoordinate.Y = obstacle.getCenter().getY();
-					
-					result_.cylinders.maximum.push_back(newCoordinate);
-				}
-
-				for(auto obstacle : currentCylinders) {
-					assignment_1::coordinate newCoordinate;
-					newCoordinate.X = obstacle.getCenter().getX();
-					newCoordinate.Y = obstacle.getCenter().getY();
-					
-					result_.cylinders.current.push_back(newCoordinate);
-				}
-
-				as_.setSucceeded(result_);
-			}
-        }
-        
-        
-};
-
+/**
+ * @brief Main function for the goal receiver node
+ * 
+ * This function initializes the ROS node and subscribes to the "/scan_raw" topic to receive
+ * laser scan messages. It also subscribes to the "/move_base/feedback" topic to receive
+ * feedback messages. It creates a DetectionAction object to send the robot to a given position
+ * and detect the cylinders in the environment. The action server sends feedback messages to the client
+ * with the current position of the robot and the detected cylinders. It also sends a result message
+ * when the robot reaches the goal position.
+ * 
+ * @param argc unused
+ * @param argv unused
+ * @return int exit code
+ */
 int main(int argc, char **argv) {
     
     // Initialize ROS node
@@ -187,9 +113,6 @@ int main(int argc, char **argv) {
 	
 	// Subscribe to the "/move_base/feedback" topic to receive feedback messages
 	ros::Subscriber feedback_subscriber = nh.subscribe("/move_base/feedback", 10, positionCallback);
-	
-	// Subscribe to the "/move_base/result" topic to receive result messages
-	ros::Subscriber result_subscriber = nh.subscribe("/move_base/result", 1, resultCallback);
 
 	//get position from client
 	DetectionAction Detection("Detection", nh);

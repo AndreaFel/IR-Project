@@ -2,6 +2,15 @@
 #include "ros/ros.h"
 #include <iostream>
 
+/**
+ * @brief Constructor for the Obstacle class
+ * 
+ * This constructor is used to create an obstacle with a given profile and position.
+ * The shape of the obstacle is identified using a chain of rules on the obstacle profile.
+ * 
+ * @param profile Obstacle profile
+ * @param position Position of the obstacle in the map
+ */
 Obstacle::Obstacle(std::vector<PolarPoint> profile, 
                    Position position)
 {
@@ -75,23 +84,54 @@ Obstacle::Obstacle(std::vector<PolarPoint> profile,
 
 }
 
+/**
+ * @brief Get the Shape object
+ * 
+ * @return Shape enum class
+ */
 Obstacle::Shape Obstacle::getShape() const
 {
     return shape_;
 }
+/**
+ * @brief Get the Profile object
+ * 
+ * @return Profile of the obstacle  (vector of polar points)
+ */
 std::vector<PolarPoint> Obstacle::getProfile() const
 {
     return profile_;
 }
+/**
+ * @brief Get the Center of the obstacle
+ * 
+ * @return Center of the obstacle (cartesian point)
+ */
 CartesianPoint Obstacle::getCenter() const
 {
     return center_;
 }
+/**
+ * @brief Get the radius of the obstacle
+ * 
+ * @return Radius of the obstacle in meters
+ */
 double Obstacle::getRadius() const
 {
     return radius_;
 }
 
+/**
+ * @brief Get the Obstacle Profiles object
+ * 
+ * This function is used to extract the obstacle profiles from the laser scan message. Given a threshold, 
+ * it identifies the obstacle profiles in the laser scan message. If the signal make a jump of more than
+ * the threshold, it is considered a new obstacle profile.
+ * 
+ * @param m Laser scan message
+ * @param threshold Threshold to identify the obstacle profiles
+ * @return Vector of obstacle profiles
+ */
 std::vector<std::vector<PolarPoint>> Obstacle::getObstacleProfiles(const sensor_msgs::LaserScan& m, double threshold)
 {
     std::vector<std::vector<PolarPoint>> profiles;
@@ -99,7 +139,9 @@ std::vector<std::vector<PolarPoint>> Obstacle::getObstacleProfiles(const sensor_
     int index = 0;    
     double prev = m.ranges.front();
 
+    // Iterate over the laser scan message
     for(auto dist : m.ranges) {
+        // If the signal make a jump of more than the threshold, it is considered a new obstacle profile
         if (abs(dist - prev) > threshold) {
             profiles.push_back(profile);
             profile.clear();

@@ -1,31 +1,56 @@
 #include "position.h"
 
-Position::Position(){
-	CartesianPoint p {};
-	point = p;
-	orientation = 0;
-}
-
+/**
+ * @brief Constructor for the Position class
+ * 
+ * @param p Position in the cartesian space
+ * @param o Orientation in radiants
+ */
 Position::Position(CartesianPoint p, double o) : point{p}, orientation{o}{
 }
 
+/**
+ * @brief Get the Point object
+ * 
+ * @return CartesianPoint 
+ */
 CartesianPoint Position::getPoint() const{
 	return point;
 }
 
+/**
+ * @brief Get orientation in radiants
+ * 
+ * @return Orientation in radiants
+ */
 double Position::getOrientation() const{
 	return orientation;
 }
 
+/**
+ * @brief Get orientation in degrees
+ * 
+ * @return Orientation in degrees
+ */
 void Position::setPoint(CartesianPoint p){
 	point = p;
 }
 
+/**
+ * @brief Set orientation in radiants
+ * 
+ * @param o Orientation in radiants
+ */
 void Position::setPoint(double x, double y){
 	point.setX(x);
 	point.setY(y);
 }
 
+/**
+ * @brief Set orientation in degrees
+ * 
+ * @param o Orientation in degrees
+ */
 void Position::setOrientation(double o){
 	orientation = o;
 }

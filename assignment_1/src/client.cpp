@@ -9,6 +9,14 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 
+/**
+ * @brief Feedback callback function for the detection action client
+ * 
+ * This function is called every time a new feedback message is received from the action server.
+ * It prints the current position of the robot and the detected cylinders.
+ * 
+ * @param feedback feedback message received from the action server
+ */
 void feedbackCallback(const assignment_1::DetectionFeedbackConstPtr& feedback) {
 
     ROS_INFO("Position - X: %f, Y: %f, R: %f",
@@ -32,6 +40,18 @@ void doneCb(const actionlib::SimpleClientGoalState& state, const assignment_1::D
 void activeCb() {}
 
 
+/**
+ * @brief Main function for the goal sender node
+ * 
+ * This function initializes the ROS node and the action client.
+ * It asks the user to insert the goal position and orientation of the robot.
+ * It asks the user if they want real-time feedback.
+ * It sends the goal to the action server and waits for the result.
+ * 
+ * @param argc number of arguments
+ * @param argv array of arguments
+ * @return int exit code
+ */
 int main(int argc, char **argv) {
     
     // Initialize ROS node
@@ -54,6 +74,7 @@ int main(int argc, char **argv) {
 		ROS_INFO("Insert point B coordinates and final orientation of the robot (in radiants):");
         
 		// Read x-coordinate input
+        std::cout<<"Insert x coordinate: (q to quit) : "<<std::endl;
         std::cin >> input;
         // Exit the while loop if 'q' is entered
         if (input == "q") {
@@ -66,6 +87,7 @@ int main(int argc, char **argv) {
 		goal.goal.X = n;
 
         // Read y-coordinate input
+        std::cout<<"Insert y coordinate: (q to quit) : "<<std::endl;
         std::cin >> input;
         // Exit the while loop if 'q' is entered
         if (input == "q") {
