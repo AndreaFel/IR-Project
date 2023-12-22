@@ -63,7 +63,7 @@ void laserCallback(const sensor_msgs::LaserScan& m){
 			currentCylinders.push_back(obstacle);
 	
 	// Save biggest group of cylinder seen
-	if(currentCylinders.size() > maxCylinders.size()){
+	if(currentCylinders.size() >= maxCylinders.size()){
 		maxCylinders.clear();
 		for(auto obstacle : obstacles)
 			if(obstacle.getShape() == Obstacle::Shape::Cylinder)
