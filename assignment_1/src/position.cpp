@@ -28,18 +28,19 @@ double Position::getOrientation() const{
 }
 
 /**
- * @brief Get orientation in degrees
+ * @brief Set the Point object 
  * 
- * @return Orientation in degrees
+ * @param p Point using CartesianPoint
  */
 void Position::setPoint(CartesianPoint p){
 	point = p;
 }
 
 /**
- * @brief Set orientation in radiants
+ * @brief Set Point object using x and y coordinates
  * 
- * @param o Orientation in radiants
+ * @param x x coordinate
+ * @param y y coordinate
  */
 void Position::setPoint(double x, double y){
 	point.setX(x);
@@ -55,17 +56,37 @@ void Position::setOrientation(double o){
 	orientation = o;
 }
 
+/**
+ * @brief Set position in the cartesian space and orientation in radiants
+ * 
+ * @param p Position in the cartesian space
+ * @param o Orientation in radiants
+ */
 void Position::setPosition(CartesianPoint p, double o){
 	point = p;
 	orientation = o;
 }
 
+/**
+ * @brief Set position in the cartesian space and orientation in radiants using x and y coordinates
+ * 
+ * @param x x coordinate
+ * @param y y coordinate
+ * @param o Orientation in radiants
+ */
 void Position::setPosition(double x, double y, double o){
 	point.setX(x);
 	point.setY(y);
 	orientation = o;
 }
 
+/**
+ * @brief get radian angle from sin and cos
+ * 
+ * @param sin sin of the angle
+ * @param cos cos of the angle
+ * @return double  angle in radians
+ */
 double Position::sinCosToRad(double sin, double cos){
 	double angle = atan2(sin, cos);
 	
@@ -75,6 +96,12 @@ double Position::sinCosToRad(double sin, double cos){
 	return angle;
 }
 
+/**
+ * @brief Shift the point by a given point
+ * 
+ * @param p Point to shift by
+ * @return Shifted point
+ */
 std::ostream& operator<<(std::ostream& os, const Position& pos){
 	os << "[(" << pos.getPoint().getX() << "," << pos.getPoint().getY() << "), " << pos.getOrientation() << "]";
     return os;

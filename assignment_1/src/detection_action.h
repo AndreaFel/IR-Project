@@ -11,13 +11,12 @@
 
 #include "polar_point.h"
 #include "cartesian_point.h"
+#include "obstacle.h"
 #include "position.h"
 #include "detection_action.h"
 #include <vector>
 #include <iostream>
 #include <cmath>
-
-send_feedback = true;
 
 /**
  * @brief detection action server class

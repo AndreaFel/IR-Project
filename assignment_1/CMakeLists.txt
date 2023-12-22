@@ -214,15 +214,28 @@ include_directories(
 
 include_directories(include${catkin_INCLUDE_DIRS})
 
+set(SOURCE_FILES_RECEIVER
+  src/server.cpp 
+  src/obstacle.cpp 
+  src/polar_point.cpp 
+  src/cartesian_point.cpp 
+  src/position.cpp
+  src/detection_action.cpp
+)
+
+set(SOURCE_FILES_SENDER
+  src/client.cpp
+)
+
 ## Build the server (goal_receiver)
-add_executable(goal_receiver src/server.cpp src/obstacle.cpp src/polar_point.cpp src/cartesian_point.cpp src/position.cpp)
+add_executable(goal_receiver ${SOURCE_FILES_RECEIVER})
 target_include_directories(goal_receiver PRIVATE ${catkin_INCLUDE_DIRS})
 target_link_libraries(goal_receiver ${catkin_LIBRARIES})
 add_dependencies(goal_receiver ${catkin_EXPORTED_TARGETS})
 add_dependencies(goal_receiver assignment_1_generate_messages_cpp)
 
 ## Build the client (goal_sender)
-add_executable(goal_sender src/client.cpp)
+add_executable(goal_sender ${SOURCE_FILES_SENDER})
 target_include_directories(goal_sender PRIVATE ${catkin_INCLUDE_DIRS})
 target_link_libraries(goal_sender ${catkin_LIBRARIES})
 add_dependencies(goal_sender assignment_1_generate_messages_cpp)

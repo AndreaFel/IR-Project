@@ -49,30 +49,36 @@ public:
     Shape getShape() const;
 
     /**
-     * @brief Get the Position object
+     * @brief Get the Profile object
      * 
-     * @return Position of the obstacle in the map
+     * @return Profile of the obstacle  (vector of polar points)
      */
     std::vector<PolarPoint> getProfile() const;
 
     /**
-     * @brief Get the Position object
+     * @brief Get the Center of the obstacle
      * 
-     * @return Position of the obstacle in the map
+     * @return Center of the obstacle (cartesian point)
      */
     CartesianPoint getCenter() const;
 
     /**
-     * @brief Get the Position object
+     * @brief Get the radius of the obstacle
      * 
-     * @return Position of the obstacle in the map
+     * @return Radius of the obstacle in meters
      */
     double getRadius() const;
 
     /**
-     * @brief Get the Position object
+     * @brief Get the Obstacle Profiles object
      * 
-     * @return Position of the obstacle in the map
+     * This function is used to extract the obstacle profiles from the laser scan message. Given a threshold, 
+     * it identifies the obstacle profiles in the laser scan message. If the signal make a jump of more than
+     * the threshold, it is considered a new obstacle profile.
+     * 
+     * @param m Laser scan message
+     * @param threshold Threshold to identify the obstacle profiles
+     * @return Vector of obstacle profiles
      */
     static std::vector<std::vector<PolarPoint>> getObstacleProfiles(const sensor_msgs::LaserScan& m, double threshold);
 
