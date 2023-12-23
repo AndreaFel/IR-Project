@@ -1,5 +1,0 @@
-\section{Movement}
-The movement of the robot is managed through the \texttt{move\_base} action system of the robot. Each single topic (goal, feedback, and result) is read separately for convenience.\\
-The server receives the orientation of the robot as an angle in radians with respect to the original orientation of the robot, but it should send it as a Quaternion. To achieve this, it uses an object of type \texttt{tf2::Quaternion} and the function \texttt{Quaternion::setRPY()}.\\\\
-The position and the quaternion are sent to the robot on the \texttt{/move\_base/goal} topic. The robot then automatically starts moving towards the given position and orientates itself with the provided angle once it reaches it.\\\\
-While the robot moves, it sends its current position on the topic \texttt{/move\_base/feedback} (along with other information), and when it reaches the goal, it sends a message on the topic \texttt{/move\_base/result}.\\

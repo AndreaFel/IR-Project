@@ -1,8 +1,0 @@
-\section{Client-Server Comunication}
-The communication between client and server is managed using an action.\\
-The client asks the user to insert a pair of coordinates (the point B), the orientation that the robot should have at the end and asks also if he wants to read the feedbacks of the server or not.\\
-The final orientation of the robot should be inserted as an angle in radians with respect to the initial orientation that the robot has (when the simulation starts the robot is facing straight to the positive section of the X axis).\\
-The client will then send a personalized message as a goal to the server, which will read it, reformat it and send it to the robot on the \texttt{/move\_base/goal} topic.\\
-While the robot is moving the server will read the feedbacks and the laser scans. It will try to detect the cylinders from the laser scan values and will send some partial results as feedback to the client. This feedback will contain the current position of the robot (taken from the feedback of the robot itself), a list of cylinders that are currently in the field of view of the robot and the largest list of cylinders that the robot has ever seen at the same time along the path.\\
-When the robot reaches the destination (point B sent by the client) it sends a result message to the server, which will, in turn, send a result to the client. The server-client result will contain the list of cylinders that the robot is seeing in his final position and the largest list ever seen along the path.\\
-Depending on the position given, it may happen that the robot never gets to see all the cylinders at once, so it may not return a complete list.
