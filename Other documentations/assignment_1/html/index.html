@@ -96,7 +96,14 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <li>Open another terminal and run the command <code>roslaunch tiago_iaslab_simulation navigation.launch</code></li>
 <li>Open the third terminal go to <code>catkin_ws</code> folder and run <code>rosrun assignment_1 goal_receiver</code></li>
 <li>Open the fourth terminal go again to <code>catkin_ws</code> folder and run <code>rosrun assignment_1 goal_sender</code></li>
-<li>Now you can add the coordinate in the following way <code>12 0</code> or <code>12 -3</code> and so on where the first number is the x coordinate and the second number is the y coordinate</li>
+<li>Now you can add on the terminal where you run <code>rosrun assignment_1 goal_sender</code>:
+  <ul>
+    <li>The coordinate point <code>X</code> (integer of float are booth accepted)</li>
+    <li>The coordinate point <code>Y</code> (integer of float are booth accepted)</li>
+    <li>The orientation (integer of float are booth accepted)</li>
+    <li>Select <code>y</code> if you want to see the real time feedback or <code>n</code> if you are interested only in the final result.</li>
+    </ul>
+</li>
 <li>To stop the program enter <code>q</code> end press <code>ENTER</code> on the terminal where you run <code>rosrun assignment_1 goal_sender</code> </li>
 </ul>
 </div></div><!-- PageDoc -->
