@@ -16,3 +16,10 @@ For start the assignment 1 follow these instructions:
     - the orientation (integer of float are booth accepted)
     - Select `y` if you want to see the real time feedback or `n` if you are interested only in the final result.
 - To stop the program enter `q` end press `ENTER` on the terminal where you run `rosrun assignment_1 goal_sender`
+
+
+
+For start the assignment 2 follow these instructions:
+
+- Open a terminal and go to `catkin_ws` folder
+- Run the command `catkin build`
