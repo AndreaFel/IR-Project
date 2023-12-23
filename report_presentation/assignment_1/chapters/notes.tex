@@ -1,0 +1,6 @@
+\section{Final Notes}
+\textbf{1.} It was required to reflect the status of the robot in the feedback. In our program, the server sends feedback only when the robot is moving and detecting, so there is only one type of status and one type of feedback message. The feedback content still reflects the status of the robot since it contains the current position of the robot (indicating movement and position updates) and the lists of cylinders (indicating detection).\\\\
+
+\textbf{2.} In the video, we can observe occasional false positives in the feedback of the first goal sent, but memorizing the largest group of cylinders helps the server to rectify these errors. It would be highly improbable for the algorithm to produce multiple errors simultaneously. Additionally, different values for the position, orientation, and feedback flag yield various outputs, demonstrating the robot's correct behavior in response to these parameters.
+%\bibliographystyle{plain} % We choose the "plain" reference style
+%\bibliography{bibliography}
