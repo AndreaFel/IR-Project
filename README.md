@@ -2,7 +2,7 @@
 Intelligent Robotics project - UniPD - 2023/2024
 
 
-For start the assignment 1 follow these instructions:
+### For start the assignment 1 follow these instructions:
 
 - Open a terminal and go to `catkin_ws` folder
 - Run the command `catkin build`
